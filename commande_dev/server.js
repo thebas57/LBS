@@ -194,6 +194,11 @@ app.put("/commandes/:id", (req,res) => {
   let query = `UPDATE commande SET livraison="${dateTest}", nom="${nom}",mail="${mail}",updated_at="${dateTest}"
   WHERE id= "${idC}"`; // query database to update une commande
 
+  if (nom.trim()=="" || mail.trim()=="") {
+    console.log("Pb modification");
+    res.status(404).json({"type":"error", "error":404, "message":"Tout les champs ne sont pas remplis / Il manque des infos " });
+  }
+  else {
   db.query(query, (err,result) => {
     if (err) {
       console.error(err);
@@ -209,6 +214,7 @@ app.put("/commandes/:id", (req,res) => {
       res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
     }
   });
+}
 
 })
 
