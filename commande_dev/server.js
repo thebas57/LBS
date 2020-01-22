@@ -73,12 +73,12 @@ app.get("/commandes", (req, res) => {
 
 });
 
-app.get("/commandes:s?", (req, res) => {
+app.get("/commandes?s=p", (req, res) => {
     res.type("application/json;charset=utf-8");
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
     let tmp = {};
-    var key = req.params.s;
+    let key = req.params.p;
     db.query(query, (err, result) => {
         if (!key) {
             return;
@@ -91,7 +91,52 @@ app.get("/commandes:s?", (req, res) => {
                 let commandList = [];
                 let command = {};
                 result.forEach(lm => {
-                    if (lm.status === key) {
+                    if (lm.status == key) {
+                        command.command = {
+                            id: lm.id,
+                            nom: lm.nom,
+                            created_at: lm.created_at,
+                            livraison: lm.livraison,
+                            status: lm.status
+                        };
+                        command.links = { self: { href: `/commandes/${lm.id}` } };
+                        commandList.push(command);
+                        command = {};
+                    }
+                });
+
+                let data = {};
+                data.type = "collection";
+                data.count = result.length;
+                data.commands = commandList;
+                res.status(200).send(JSON.stringify(data));
+                console.log("Commandes trouvées");
+
+            }
+        };
+    });
+
+    /*---------------------pagination-------------------*/
+});
+app.get("/commandes:s", (req, res) => {
+    res.type("application/json;charset=utf-8");
+    res.setHeader('Content-Type', 'application/json;charset=utf-8');
+    let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
+    let tmp = {};
+    let key = req.params.s;
+    db.query(query, (err, result) => {
+        if (!key) {
+            return;
+
+        } else {
+            if (err) {
+                console.error(err);
+            } else {
+                //tmp = new ({ type: 200, msg: 'SUCESS', error: 'SUCESS' });
+                let commandList = [];
+                let command = {};
+                result.forEach(lm => {
+                    if (lm.status == key) {
                         command.command = {
                             id: lm.id,
                             nom: lm.nom,
@@ -118,6 +163,7 @@ app.get("/commandes:s?", (req, res) => {
 
 
 });
+
 
 // ------------------- Pour une commande --------------
 app.get("/commandes/:id", (req, res) => {
