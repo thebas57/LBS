@@ -18,6 +18,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+function twoDigits(d) {
+  if (0 <= d && d < 10) return "0" + d.toString();
+  if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
+  return d.toString();
+}
+
+function toMysqlFormat(date) {
+  return date.getUTCFullYear() + "-" + twoDigits(1 + date.getUTCMonth()) + "-" + twoDigits(date.getUTCDate()) + " " + twoDigits(date.getUTCHours()) + ":" + twoDigits(date.getUTCMinutes()) + ":" + twoDigits(date.getUTCSeconds());
+}
 
 app.get("/", (req, res) => {
   res.send("Commande API\n");
@@ -72,7 +81,8 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
   const commande = JSON.stringify(req.body);
   const objCommande = JSON.parse(commande);
   let livraison = objCommande.livraison;
-  let dateTest = "2019-11-08 13:45:55"
+  // let dateTest = "2019-11-08 13:45:55"
+  let dateTest = toMysqlFormat(new Date());
   let nom = objCommande.nom;
   let mail = objCommande.mail;
   let id = uuid();
@@ -83,6 +93,7 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
       console.error(err);
       res.status(500).send(JSON.stringify(err)); //erreur serveur
     }
+    console.log(dateTest);
     console.log("La commande a été créer");
     res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
     
@@ -110,7 +121,6 @@ app.get("*", (req,res) => {
   res.status(400).json({"type":"error", "error":400, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
   res.status(500).json({"type":"error", "error":500, "message":"Pb serveur : " + req._parsedUrl.pathname });
 });
-
 
 
 app.listen(PORT, HOST);
