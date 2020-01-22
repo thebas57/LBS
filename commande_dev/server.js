@@ -17,6 +17,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
+function twoDigits(d) {
+  if (0 <= d && d < 10) return "0" + d.toString();
+  if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
+  return d.toString();
+}
+
+function toMysqlFormat(date) {
+  return date.getUTCFullYear() + "-" + twoDigits(1 + date.getUTCMonth()) + "-" + twoDigits(date.getUTCDate()) + " " + twoDigits(date.getUTCHours()) + ":" + twoDigits(date.getUTCMinutes()) + ":" + twoDigits(date.getUTCSeconds());
+}
 
 app.get("/", (req, res) => {
     res.send("Commande API\n");
@@ -181,36 +190,71 @@ app.get("/commandes/:id", (req, res) => {
 });
 
 // ------------------- POST UNE COMMANDE ---------------
-app.post("/commandes", (req, res) => {
-    res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    // Json en objet 
+app.post("/commandes", (req,res) => {
+res.setHeader('Content-Type', 'application/json;charset=utf-8');
+// Json en objet 
 
-    const commande = JSON.stringify(req.body);
-    const objCommande = JSON.parse(commande);
-    let livraison = objCommande.livraison;
-    let dateTest = '2019-11-08 13:45:55';
-    let nom = objCommande.nom;
-    let mail = objCommande.mail;
-    let id = uuid();
-    let query = `INSERT INTO commande (id,livraison, nom, mail, created_at) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" )`;
+  const commande = JSON.stringify(req.body);
+  const objCommande = JSON.parse(commande);
+  let livraison = objCommande.livraison;
+  // let dateTest = "2019-11-08 13:45:55"
+  let dateTest = toMysqlFormat(new Date());
+  let nom = objCommande.nom;
+  let mail = objCommande.mail;
+  let id = uuid();
+  let query = `INSERT INTO commande (id,livraison, nom, mail, created_at) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" )`;
 
-    db.query(query, (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send(JSON.stringify(err)); //erreur serveur
-        }
-        console.log("La commande a été créer");
-        res.status(201).send(JSON.stringify({ result: result, commande: req.body })); // renvoie le json dans le body je crois
+  if (nom.trim()=="" || mail.trim()=="" ) {
+    console.log("pb insertion");
+    res.status(404).json({"type":"error", "error":404, "message":"Tout les champs ne sont pas remplis / Il manque des infos " });
+  }
+  else {
+    db.query(query, (err,result) => {
 
-    });
+    if (err) {
+      console.error(err);
+      res.status(500).send(JSON.stringify(err)); //erreur serveur
+    }
+    else {
+      console.log("La commande a été créer");
+      res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
+    }  
+  });
+  }
 
 })
 
 // ----------------- Modif (PUT) Commande ----------------
-app.put("/commandes/:id", (req, res) => {
-    console.log(req.params.id); // your JSON
-    res.status(200).header({ location: "POST" + req.route.path });
-    //res.json(req.body);    // echo the result back
+app.put("/commandes/:id", (req,res) => {
+  res.type("application/json;charset=utf-8");
+
+  const commande = JSON.stringify(req.body);
+  const objCommande = JSON.parse(commande);
+
+  let idC = req.params.id;
+  let dateTest = "2019-11-08 13:45:55"
+  let livraison = objCommande.livraison;
+  let nom = objCommande.nom;
+  let mail = objCommande.mail;
+
+  let query = `UPDATE commande SET livraison="${dateTest}", nom="${nom}",mail="${mail}",updated_at="${dateTest}"
+  WHERE id= "${idC}"`; // query database to update une commande
+
+  db.query(query, (err,result) => {
+    if (err) {
+      console.error(err);
+      res.status(404).send(err);
+    }
+    if (result.affectedRows==0) {
+      console.log("La commande " + req.params.id + " est inexistante");
+      res.status(404).json({"type":"error", "error":404, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
+    }
+    else {
+      console.log("La commande " + req.params.id + "a été modifié");
+      console.log(result);
+      res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
+    }
+  });
 
 })
 
@@ -226,6 +270,13 @@ app.get("*", (req, res) => {
     res.status(400).json({ "type": "error", "error": 400, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
     res.status(500).json({ "type": "error", "error": 500, "message": "Pb serveur : " + req._parsedUrl.pathname });
 });
+
+// ------------------ PUT ------------------
+app.put("*", (req,res) => {
+  res.status(400).json({"type":"error", "error":400, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
+  res.status(500).json({"type":"error", "error":500, "message":"Pb serveur : " + req._parsedUrl.pathname });
+});
+
 
 
 
