@@ -53,7 +53,7 @@ db.query(query, (err, result) => {
     res.status(404).send(err);
   }
   if (result.length<=0) {
-    console.log(req.params.id + " Inexistant");
+    console.log("La commande " + req.params.id + " est inexistant");
     res.status(404).json({"type":"error", "error":404, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
   }
   else {
@@ -78,23 +78,57 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
   let id = uuid();
   let query = `INSERT INTO commande (id,livraison, nom, mail, created_at) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" )`;
 
-  db.query(query, (err,result) => {
+  if (nom.trim()=="" || mail.trim()=="" ) {
+    console.log("pb insertion");
+    res.status(404).json({"type":"error", "error":404, "message":"Tout les champs ne sont pas remplis / Il manque des infos " });
+  }
+  else {
+    db.query(query, (err,result) => {
+
     if (err) {
       console.error(err);
       res.status(500).send(JSON.stringify(err)); //erreur serveur
     }
-    console.log("La commande a été créer");
-    res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
-    
+    else {
+      console.log("La commande a été créer");
+      res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
+    }
   });
+  }
 
 })
 
 // ----------------- Modif (PUT) Commande ----------------
 app.put("/commandes/:id", (req,res) => {
-  console.log(req.params.id);      // your JSON
-  res.status(200).header({location:"POST" + req.route.path});
-  //res.json(req.body);    // echo the result back
+  res.type("application/json;charset=utf-8");
+
+  const commande = JSON.stringify(req.body);
+  const objCommande = JSON.parse(commande);
+
+  let idC = req.params.id;
+  let dateTest = "2019-11-08 13:45:55"
+  let livraison = objCommande.livraison;
+  let nom = objCommande.nom;
+  let mail = objCommande.mail;
+
+  let query = `UPDATE commande SET livraison="${dateTest}", nom="${nom}",mail="${mail}",updated_at="${dateTest}"
+  WHERE id= "${idC}"`; // query database to update une commande
+
+  db.query(query, (err,result) => {
+    if (err) {
+      console.error(err);
+      res.status(404).send(err);
+    }
+    if (result.affectedRows==0) {
+      console.log("La commande " + req.params.id + " est inexistante");
+      res.status(404).json({"type":"error", "error":404, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
+    }
+    else {
+      console.log("La commande " + req.params.id + "a été modifié");
+      console.log(result);
+      res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
+    }
+  });
 
 })
 
@@ -110,6 +144,14 @@ app.get("*", (req,res) => {
   res.status(400).json({"type":"error", "error":400, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
   res.status(500).json({"type":"error", "error":500, "message":"Pb serveur : " + req._parsedUrl.pathname });
 });
+
+// ------------------ PUT ------------------
+app.put("*", (req,res) => {
+  res.status(400).json({"type":"error", "error":400, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
+  res.status(500).json({"type":"error", "error":500, "message":"Pb serveur : " + req._parsedUrl.pathname });
+});
+
+
 
 
 
