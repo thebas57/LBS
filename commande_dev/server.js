@@ -16,7 +16,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
-
+    //twoDigits et toMysqlFormat son les fonctions pour convertir les dates dans le format accepter par MySQL
 function twoDigits(d) {
   if (0 <= d && d < 10) return "0" + d.toString();
   if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
@@ -33,57 +33,35 @@ app.get("/", (req, res) => {
 
 // -------------------GET -----------------
 // -------------------- Pour les Commandes --------------------
+
+//-----pagination taille et filtre dans la meme fonction-------
+
 app.get("/commandes", (req, res) => {
+    let page = 1
+    if(req.query.page != null && req.query.page > 0){
+        page = req.query.page
+    }
+    let size = 10
+    if(req.query.size != null && req.query.size > 0){
+        size = req.query.size
+    }
+
+    let status = null
+    if(req.query.s > 0 && req.query.s < 5){
+        status = req.query.s
+    }
+
+    let startIndex = (page - 1) * size
+    let endIndex = page * size
+    let count = 0
+
+    
+
+    
     res.type("application/json;charset=utf-8");
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
     db.query(query, (err, result) => {
-        if (err) {
-            console.error(err);
-        } else {
-            //tmp = new ({ type: 200, msg: 'SUCESS', error: 'SUCESS' });
-            let commandList = [];
-            let command = {};
-            result.forEach(lm => {
-                command.command = {
-                    id: lm.id,
-                    nom: lm.nom,
-                    created_at: lm.created_at,
-                    livraison: lm.livraison,
-                    status: lm.status
-                };
-
-                command.links = { self: { href: `/commandes/${lm.id}` } };
-                commandList.push(command);
-                command = {};
-            });
-
-            let data = {};
-            data.type = "collection";
-            data.count = result.length;
-            data.commands = commandList;
-
-
-            res.status(200).send(JSON.stringify(data));
-
-
-        }
-    });
-
-
-});
-
-app.get("/commandes?s=p", (req, res) => {
-    res.type("application/json;charset=utf-8");
-    res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
-    let tmp = {};
-    let key = req.params.p;
-    db.query(query, (err, result) => {
-        if (!key) {
-            return;
-
-        } else {
             if (err) {
                 console.error(err);
             } else {
@@ -91,7 +69,22 @@ app.get("/commandes?s=p", (req, res) => {
                 let commandList = [];
                 let command = {};
                 result.forEach(lm => {
-                    if (lm.status == key) {
+                    if(status != null){
+                        if(lm.status == status){
+                            command.command = {
+                                id: lm.id,
+                                nom: lm.nom,
+                                created_at: lm.created_at,
+                                livraison: lm.livraison,
+                                status: lm.status
+                            };
+                        
+                            command.links = { self: { href: `/commandes/${lm.id}` } };
+                            commandList.push(command);
+                            command = {};
+                            count++
+                        }
+                    }else{
                         command.command = {
                             id: lm.id,
                             nom: lm.nom,
@@ -99,70 +92,30 @@ app.get("/commandes?s=p", (req, res) => {
                             livraison: lm.livraison,
                             status: lm.status
                         };
+                    
                         command.links = { self: { href: `/commandes/${lm.id}` } };
                         commandList.push(command);
                         command = {};
+                        count++
                     }
                 });
 
-                let data = {};
-                data.type = "collection";
-                data.count = result.length;
-                data.commands = commandList;
-                res.status(200).send(JSON.stringify(data));
-                console.log("Commandes trouvées");
-
-            }
-        };
-    });
-
-    /*---------------------pagination-------------------*/
-});
-app.get("/commandes:s", (req, res) => {
-    res.type("application/json;charset=utf-8");
-    res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
-    let tmp = {};
-    let key = req.params.s;
-    db.query(query, (err, result) => {
-        if (!key) {
-            return;
-
-        } else {
-            if (err) {
-                console.error(err);
-            } else {
-                //tmp = new ({ type: 200, msg: 'SUCESS', error: 'SUCESS' });
-                let commandList = [];
-                let command = {};
-                result.forEach(lm => {
-                    if (lm.status == key) {
-                        command.command = {
-                            id: lm.id,
-                            nom: lm.nom,
-                            created_at: lm.created_at,
-                            livraison: lm.livraison,
-                            status: lm.status
-                        };
-                        command.links = { self: { href: `/commandes/${lm.id}` } };
-                        commandList.push(command);
-                        command = {};
-                    }
-                });
 
                 let data = {};
                 data.type = "collection";
-                data.count = result.length;
-                data.commands = commandList;
-                res.status(200).send(JSON.stringify(data));
-                console.log("Commandes trouvées");
+                data.count = count;
+                data.size = commandList.slice(startIndex,endIndex).length;
+                data.commands = commandList.slice(startIndex,endIndex);
 
+                res.status(200).send(JSON.stringify(data));
             }
-        };
+
     });
 
 
 });
+
+
 
 
 // ------------------- Pour une commande --------------
@@ -232,7 +185,7 @@ app.put("/commandes/:id", (req,res) => {
   const objCommande = JSON.parse(commande);
 
   let idC = req.params.id;
-  let dateTest = "2019-11-08 13:45:55"
+  let dateTest = toMysqlFormat(new Date());
   let livraison = objCommande.livraison;
   let nom = objCommande.nom;
   let mail = objCommande.mail;
