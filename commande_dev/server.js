@@ -55,9 +55,6 @@ app.get("/commandes", (req, res) => {
     let endIndex = page * size
     let count = 0
 
-    
-
-    
     res.type("application/json;charset=utf-8");
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
@@ -100,18 +97,43 @@ app.get("/commandes", (req, res) => {
                     }
                 });
 
+               
+                let nbpage = Math.ceil(count/size)
+                if(page > nbpage){
+                    page = nbpage
+                    startIndex = (page - 1) * size
+                    endIndex = page * size
+                }
 
                 let data = {};
                 data.type = "collection";
                 data.count = count;
-                data.size = commandList.slice(startIndex,endIndex).length;
+                data.size = commandList.slice(startIndex,endIndex).length;                
+                
+                if (startIndex > 0){
+                        let previous = "localhost:19080/commandes?page="+parseInt(parseInt(page)-1)+"&size="+size;
+                    if(status != null){
+                        previous += "&s=" +status;
+                    }
+                    data.previous = previous;
+                }
+
+                if(endIndex < count){
+                    let next = "localhost:19080/commandes?page="+parseInt(parseInt(page)+1)+"&size="+size;
+                    if(status != null){
+                        next += "&s=" +status;
+                    }
+                    data.next = next;
+                                      
+                }
+               
+                
                 data.commands = commandList.slice(startIndex,endIndex);
 
                 res.status(200).send(JSON.stringify(data));
             }
 
     });
-
 
 });
 
