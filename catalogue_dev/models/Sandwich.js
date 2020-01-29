@@ -6,7 +6,7 @@ const schema = new mongoose.Schema({
   description: { type: String, required: true },
   type_pain: { type: String, text: true },
   image: { type:String },
-  categories: { type: String, required: true },
+  categories: { type: Array, required: true },
   prix: { type: String, required: true }
 });
 
