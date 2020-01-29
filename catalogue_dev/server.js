@@ -66,6 +66,13 @@ app.get("/categories/:id/sandwichs", (req, res) => {
     if (err) {
       res.status(500).send(err);
     }
+  // var_dump($result);
+  res.status(200).json(result);
+  });
+});
+
+
+
     
 //récupération de tous les sanwdichs
 app.get("/sandwich", (req, res) => {
