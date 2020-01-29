@@ -43,6 +43,35 @@ app.get("/categories", (req, res) => {
   });
 });
 
+
+
+//récupération d'une catégorie
+app.get("/categories/:id", (req, res) => {
+  let idcategorie = req.params.id;
+  Category.find({id: idcategorie}, (err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    }
+    // var_dump($result);
+    res.status(200).json(result);
+  });
+});
+
+
+//récupération des sandwichs d'une catégorie
+app.get("/categories/:id/sandwichs", (req, res) => {
+  let idcategorie = req.params.id;
+  Category.find({id: idcategorie}, (err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    }
+    
+    res.status(200).json(result);
+  });
+});
+
+
+
 //ajout d'une nouvelle catégorie
 app.post("/categories", (req, res) => {
   res.set("Accept", "application/json");
