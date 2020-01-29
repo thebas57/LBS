@@ -7,6 +7,7 @@ const uuidv1 = require('uuid/v1');
 
 //import du modèle de données Category défini avec Mongoose
 const Category = require("./models/Category");
+const Sandwich = require("./models/Sandwich");
 
 const PORT = 8080;
 const HOST = "0.0.0.0";
@@ -66,10 +67,16 @@ app.get("/categories/:id/sandwichs", (req, res) => {
       res.status(500).send(err);
     }
     
+//récupération de tous les sanwdichs
+app.get("/sandwich", (req, res) => {
+  Sandwich.find({}, (err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    }
+
     res.status(200).json(result);
   });
 });
-
 
 
 //ajout d'une nouvelle catégorie
