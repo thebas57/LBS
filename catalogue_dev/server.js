@@ -66,8 +66,14 @@ app.get("/categories/:id/sandwichs", (req, res) => {
     if (err) {
       res.status(500).send(err);
     }
-  // var_dump($result);
-  res.status(200).json(result);
+    let nom = result[0].nom
+    Sandwich.find({categories:nom},(err2,result2) => {
+      if (err2) {
+        res.status(500).send(err);
+      }
+      res.status(200).json(result2);
+    })
+  
   });
 });
 
