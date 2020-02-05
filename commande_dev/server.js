@@ -147,14 +147,12 @@ app.get("/commandes/:id", (req, res) => {
     res.type("application/json;charset=utf-8");
 
     let idC = req.params.id;
-    console.log(req.params.id);
     let token = null;
     if (req.query.token != null){
         token = req.query.token;
     }else{
-        token = null;
+        token = req.headers['x-lbs-token'];
     }
-
 
     let data = {};
     let links = {};
@@ -165,17 +163,12 @@ app.get("/commandes/:id", (req, res) => {
     let donne = {};
     let items = {};
 
-    if(bcrypt.compareSync(idC, token)){
-        console.log("tu décrypte le token");
-    }
-
-    // if(token || !bcrypt.compareSync(idC, token)){
     if(!bcrypt.compareSync(idC, token)){
         res.status(404).json({ "type": "error", "error": 404, "message": "le token est invalide "});
     }else{
         
-        // let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
-        let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
+        let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
+        // let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
 
 
 
@@ -187,7 +180,7 @@ app.get("/commandes/:id", (req, res) => {
             if (result.length <= 0) {
                 console.log(req.params.id + " Inexistant");
                 res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
-            } else {
+            }else{
 
                 donne = { "id": result[0].id, "created_at": result[0].created_at, "livraison": result[0].livraison, "nom": result[0].nom, "mail": result[0].mail, "montant": result[0].montant };
                 for (let i = 0; i < result.length; i++) {
@@ -235,7 +228,7 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
             }  else {
                 console.log("La commande a été créer");
                 res.status(201).send(JSON.stringify({commande: req.body, id:id, token:hash}));// renvoie le json dans le body je crois
-              } 
+              }
         });
     }
  
