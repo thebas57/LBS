@@ -18,15 +18,15 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
-    //twoDigits et toMysqlFormat son les fonctions pour convertir les dates dans le format accepter par MySQL
+//twoDigits et toMysqlFormat son les fonctions pour convertir les dates dans le format accepter par MySQL
 function twoDigits(d) {
-  if (0 <= d && d < 10) return "0" + d.toString();
-  if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
-  return d.toString();
+    if (0 <= d && d < 10) return "0" + d.toString();
+    if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
+    return d.toString();
 }
 
 function toMysqlFormat(date) {
-  return date.getUTCFullYear() + "-" + twoDigits(1 + date.getUTCMonth()) + "-" + twoDigits(date.getUTCDate()) + " " + twoDigits(date.getUTCHours()) + ":" + twoDigits(date.getUTCMinutes()) + ":" + twoDigits(date.getUTCSeconds());
+    return date.getUTCFullYear() + "-" + twoDigits(1 + date.getUTCMonth()) + "-" + twoDigits(date.getUTCDate()) + " " + twoDigits(date.getUTCHours()) + ":" + twoDigits(date.getUTCMinutes()) + ":" + twoDigits(date.getUTCSeconds());
 }
 
 app.get("/", (req, res) => {
@@ -40,16 +40,16 @@ app.get("/", (req, res) => {
 
 app.get("/commandes", (req, res) => {
     let page = 1
-    if(req.query.page != null && req.query.page > 0){
+    if (req.query.page != null && req.query.page > 0) {
         page = req.query.page
     }
     let size = 10
-    if(req.query.size != null && req.query.size > 0){
+    if (req.query.size != null && req.query.size > 0) {
         size = req.query.size
     }
 
     let status = null
-    if(req.query.s > 0 && req.query.s < 5){
+    if (req.query.s > 0 && req.query.s < 5) {
         status = req.query.s
     }
 
@@ -61,29 +61,15 @@ app.get("/commandes", (req, res) => {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     let query = "SELECT * FROM `commande` ORDER BY id ASC"; // query database to get all the players
     db.query(query, (err, result) => {
-            if (err) {
-                console.error(err);
-            } else {
-                //tmp = new ({ type: 200, msg: 'SUCESS', error: 'SUCESS' });
-                let commandList = [];
-                let command = {};
-                result.forEach(lm => {
-                    if(status != null){
-                        if(lm.status == status){
-                            command.command = {
-                                id: lm.id,
-                                nom: lm.nom,
-                                created_at: lm.created_at,
-                                livraison: lm.livraison,
-                                status: lm.status
-                            };
-                        
-                            command.links = { self: { href: `/commandes/${lm.id}` } };
-                            commandList.push(command);
-                            command = {};
-                            count++
-                        }
-                    }else{
+        if (err) {
+            console.error(err);
+        } else {
+            //tmp = new ({ type: 200, msg: 'SUCESS', error: 'SUCESS' });
+            let commandList = [];
+            let command = {};
+            result.forEach(lm => {
+                if (status != null) {
+                    if (lm.status == status) {
                         command.command = {
                             id: lm.id,
                             nom: lm.nom,
@@ -91,49 +77,63 @@ app.get("/commandes", (req, res) => {
                             livraison: lm.livraison,
                             status: lm.status
                         };
-                    
+
                         command.links = { self: { href: `/commandes/${lm.id}` } };
                         commandList.push(command);
                         command = {};
                         count++
                     }
-                });
+                } else {
+                    command.command = {
+                        id: lm.id,
+                        nom: lm.nom,
+                        created_at: lm.created_at,
+                        livraison: lm.livraison,
+                        status: lm.status
+                    };
 
-               
-                let nbpage = Math.ceil(count/size)
-                if(page > nbpage){
-                    page = nbpage
-                    startIndex = (page - 1) * size
-                    endIndex = page * size
+                    command.links = { self: { href: `/commandes/${lm.id}` } };
+                    commandList.push(command);
+                    command = {};
+                    count++
                 }
+            });
 
-                let data = {};
-                data.type = "collection";
-                data.count = count;
-                data.size = commandList.slice(startIndex,endIndex).length;                
-                
-                if (startIndex > 0){
-                        let previous = "localhost:19080/commandes?page="+parseInt(parseInt(page)-1)+"&size="+size;
-                    if(status != null){
-                        previous += "&s=" +status;
-                    }
-                    data.previous = previous;
-                }
 
-                if(endIndex < count){
-                    let next = "localhost:19080/commandes?page="+parseInt(parseInt(page)+1)+"&size="+size;
-                    if(status != null){
-                        next += "&s=" +status;
-                    }
-                    data.next = next;
-                                      
-                }
-               
-                
-                data.commands = commandList.slice(startIndex,endIndex);
-
-                res.status(200).send(JSON.stringify(data));
+            let nbpage = Math.ceil(count / size)
+            if (page > nbpage) {
+                page = nbpage
+                startIndex = (page - 1) * size
+                endIndex = page * size
             }
+
+            let data = {};
+            data.type = "collection";
+            data.count = count;
+            data.size = commandList.slice(startIndex, endIndex).length;
+
+            if (startIndex > 0) {
+                let previous = "localhost:19080/commandes?page=" + parseInt(parseInt(page) - 1) + "&size=" + size;
+                if (status != null) {
+                    previous += "&s=" + status;
+                }
+                data.previous = previous;
+            }
+
+            if (endIndex < count) {
+                let next = "localhost:19080/commandes?page=" + parseInt(parseInt(page) + 1) + "&size=" + size;
+                if (status != null) {
+                    next += "&s=" + status;
+                }
+                data.next = next;
+
+            }
+
+
+            data.commands = commandList.slice(startIndex, endIndex);
+
+            res.status(200).send(JSON.stringify(data));
+        }
 
     });
 
@@ -147,8 +147,18 @@ app.get("/commandes/:id", (req, res) => {
     res.type("application/json;charset=utf-8");
 
     let idC = req.params.id;
+    let data = {};
+    let links = {};
+    data.type = "ressouce";
+    links.self = `/commandes/"${ idC }"`;
+    links.items = `/commandes/"${ idC }"/items`;
+    data.links = links;
+    let donne = {};
+    let items = {};
 
-    let query = `SELECT * FROM commande WHERE id= "${idC}" ORDER BY id ASC`; // query database to get all the players
+    let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
+
+
 
     db.query(query, (err, result) => {
         if (err) {
@@ -159,11 +169,20 @@ app.get("/commandes/:id", (req, res) => {
             console.log(req.params.id + " Inexistant");
             res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
         } else {
-            //res.status(200).send(JSON.stringify(result));
-            console.log("La commande " + req.params.id + "a été trouvé");
-            res.status(200).send(JSON.stringify(result));
+
+            donne = { "id": result[0].id, "created_at": result[0].created_at, "livraison": result[0].livraison, "nom": result[0].nom, "mail": result[0].mail, "montant": result[0].montant };
+            for (let i = 0; i < result.length; i++) {
+                items[i] = { "uri": result[i].uri, "libelle": result[i].libelle, "tarif": result[i].tarif, "quantite": result[i].quantite };
+            }
+            donne.items = items
+            data.commands = donne;
+
+
+            res.status(200).send(JSON.stringify(data));
+
         }
     });
+
 });
 
 // ------------------- POST UNE COMMANDE ---------------
@@ -190,56 +209,56 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
   else {
     db.query(query, (err,result) => {
 
-    if (err) {
-      console.error(err);
-      res.status(500).send(JSON.stringify(err)); //erreur serveur
+            if (err) {
+                console.error(err);
+                res.status(500).send(JSON.stringify(err)); //erreur serveur
+            }  else {
+                console.log("La commande a été créer");
+                res.status(201).send(JSON.stringify({commande: req.body, id:id, token:hash}));// renvoie le json dans le body je crois
+              } 
+        });
     }
-    else {
-      console.log("La commande a été créer");
-      res.status(201).send(JSON.stringify({commande: req.body, id:id, token:hash}));// renvoie le json dans le body je crois
-    }  
+ 
   });
-  }
-
-})
 
 // ----------------- Modif (PUT) Commande ----------------
-app.put("/commandes/:id", (req,res) => {
-  res.type("application/json;charset=utf-8");
+app.put("/commandes/:id", (req, res) => {
+    res.type("application/json;charset=utf-8");
 
-  const commande = JSON.stringify(req.body);
-  const objCommande = JSON.parse(commande);
+    const commande = JSON.stringify(req.body);
+    const objCommande = JSON.parse(commande);
 
-  let idC = req.params.id;
-  let dateTest = toMysqlFormat(new Date());
-  let livraison = objCommande.livraison;
-  let nom = objCommande.nom;
-  let mail = objCommande.mail;
+    let idC = req.params.id;
+    let dateTest = toMysqlFormat(new Date());
+    let livraison = objCommande.livraison;
+    let nom = objCommande.nom;
+    let mail = objCommande.mail;
 
-  let query = `UPDATE commande SET livraison="${dateTest}", nom="${nom}",mail="${mail}",updated_at="${dateTest}"
-  WHERE id= "${idC}"`; // query database to update une commande
+    let query = `
+                            UPDATE commande SET livraison = "${dateTest}", nom = "${nom}", mail = "${mail}", updated_at = "${dateTest}"
+                            WHERE id = "${idC}"
+                            `; // query database to update une commande
 
-  if (nom.trim()=="" || mail.trim()=="") {
-    console.log("Pb modification");
-    res.status(404).json({"type":"error", "error":404, "message":"Tout les champs ne sont pas remplis / Il manque des infos " });
-  }
-  else {
-  db.query(query, (err,result) => {
-    if (err) {
-      console.error(err);
-      res.status(404).send(err);
+    if (nom.trim() == "" || mail.trim() == "") {
+        console.log("Pb modification");
+        res.status(404).json({ "type": "error", "error": 404, "message": "Tout les champs ne sont pas remplis / Il manque des infos " });
+    } else {
+        db.query(query, (err, result) => {
+            if (err) {
+                console.error(err);
+                res.status(404).send(err);
+            }
+            if (result.affectedRows == 0) {
+                console.log("La commande " + req.params.id + " est inexistante");
+                res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
+            } else {
+                console.log("La commande " + req.params.id + "a été modifié");
+
+                console.log(result);
+                res.status(201).send(JSON.stringify({ result: result, commande: req.body })); // renvoie le json dans le body je crois
+            }
+        });
     }
-    if (result.affectedRows==0) {
-      console.log("La commande " + req.params.id + " est inexistante");
-      res.status(404).json({"type":"error", "error":404, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
-    }
-    else {
-      console.log("La commande " + req.params.id + "a été modifié");
-      console.log(result);
-      res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
-    }
-  });
-}
 
 })
 
@@ -257,13 +276,14 @@ app.get("*", (req, res) => {
 });
 
 // ------------------ PUT ------------------
-app.put("*", (req,res) => {
-  res.status(400).json({"type":"error", "error":400, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
-  res.status(500).json({"type":"error", "error":500, "message":"Pb serveur : " + req._parsedUrl.pathname });
+app.put("*", (req, res) => {
+    res.status(400).json({ "type": "error", "error": 400, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
+    res.status(500).json({ "type": "error", "error": 500, "message": "Pb serveur : " + req._parsedUrl.pathname });
 });
 
 app.listen(PORT, HOST);
-console.log(`Commande API Running on http://${HOST}:${PORT}`);
+console.log(`
+                            Commande API Running on http: //${HOST}:${PORT}`);
 
 const db = mysql.createConnection({
     host: "mysql.commande",
@@ -278,4 +298,4 @@ db.connect(err => {
         throw err;
     }
     console.log("Connected to database");
-});
+})
