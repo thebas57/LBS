@@ -201,6 +201,10 @@ app.post("/commandes", (req, res) => {
     let montant = 0;
     let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
 
+    let tabUri = objCommande.items;
+    let libelle = "test";
+    let tarif=1;
+
     if (nom.trim() == "" || mail.trim() == "") {
         console.log("pb insertion");
         res.status(404).json({ "type": "error", "error": 404, "message": "Tout les champs ne sont pas remplis / Il manque des infos " });
@@ -211,10 +215,31 @@ app.post("/commandes", (req, res) => {
                 console.error(err);
                 res.status(500).send(JSON.stringify(err)); //erreur serveur
             } else {
-                console.log("La commande a été créer");
-                res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
+                // insertion item pour chaque élément
+                let c = 0;
+                tabUri.forEach(items => {
+                    let uri = items.uri;
+                    let quantite = items.q;
+                    let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
+                    
+                    db.query(queryItem, (err, result) => {
+                    if (err) {
+                        console.error(err);
+                        res.status(500).send(JSON.stringify(err)); //erreur serveur
+                    } else {
+                        c = c+1;
+                        
+                        if (tabUri.length == c) {
+                           res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
+                        }
+                        
+                        }       
+                    })
+                }
+            ); 
             }
         });
+
     }
 
 });
