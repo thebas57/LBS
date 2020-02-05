@@ -234,10 +234,8 @@ app.put("/commandes/:id", (req, res) => {
     let nom = objCommande.nom;
     let mail = objCommande.mail;
 
-    let query = `
-                            UPDATE commande SET livraison = "${dateTest}", nom = "${nom}", mail = "${mail}", updated_at = "${dateTest}"
-                            WHERE id = "${idC}"
-                            `; // query database to update une commande
+    let query = `UPDATE commande SET livraison = "${dateTest}", nom = "${nom}", mail = "${mail}", updated_at = "${dateTest}"
+                 WHERE id = "${idC}"`; // query database to update une commande
 
     if (nom.trim() == "" || mail.trim() == "") {
         console.log("Pb modification");
@@ -282,8 +280,7 @@ app.put("*", (req, res) => {
 });
 
 app.listen(PORT, HOST);
-console.log(`
-                            Commande API Running on http: //${HOST}:${PORT}`);
+console.log(`Commande API Running on http: //${HOST}:${PORT}`);
 
 const db = mysql.createConnection({
     host: "mysql.commande",
