@@ -1,4 +1,3 @@
-
 "use strict";
 
 const express = require("express");
@@ -186,40 +185,39 @@ app.get("/commandes/:id", (req, res) => {
 });
 
 // ------------------- POST UNE COMMANDE ---------------
-app.post("/commandes", (req,res) => {
-res.setHeader('Content-Type', 'application/json;charset=utf-8');
-// Json en objet 
+app.post("/commandes", (req, res) => {
+    res.setHeader('Content-Type', 'application/json;charset=utf-8');
+    // Json en objet 
 
-  const commande = JSON.stringify(req.body);
-  const objCommande = JSON.parse(commande);
-  let livraison = objCommande.livraison;
-  // let dateTest = "2019-11-08 13:45:55"
-  let dateTest = toMysqlFormat(new Date());
-  let nom = objCommande.nom;
-  let mail = objCommande.mail;
-  let id = uuid();
-  let hash = bcrypt.hashSync(id, 10);
-  let montant = 0;
-  let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
+    const commande = JSON.stringify(req.body);
+    const objCommande = JSON.parse(commande);
+    let livraison = objCommande.livraison;
+    // let dateTest = "2019-11-08 13:45:55"
+    let dateTest = toMysqlFormat(new Date());
+    let nom = objCommande.nom;
+    let mail = objCommande.mail;
+    let id = uuid();
+    let hash = bcrypt.hashSync(id, 10);
+    let montant = 0;
+    let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
 
-  if (nom.trim()=="" || mail.trim()=="" ) {
-    console.log("pb insertion");
-    res.status(404).json({"type":"error", "error":404, "message":"Tout les champs ne sont pas remplis / Il manque des infos " });
-  }
-  else {
-    db.query(query, (err,result) => {
+    if (nom.trim() == "" || mail.trim() == "") {
+        console.log("pb insertion");
+        res.status(404).json({ "type": "error", "error": 404, "message": "Tout les champs ne sont pas remplis / Il manque des infos " });
+    } else {
+        db.query(query, (err, result) => {
 
             if (err) {
                 console.error(err);
                 res.status(500).send(JSON.stringify(err)); //erreur serveur
-            }  else {
+            } else {
                 console.log("La commande a été créer");
-                res.status(201).send(JSON.stringify({commande: req.body, id:id, token:hash}));// renvoie le json dans le body je crois
-              } 
+                res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
+            }
         });
     }
- 
-  });
+
+});
 
 // ----------------- Modif (PUT) Commande ----------------
 app.put("/commandes/:id", (req, res) => {
