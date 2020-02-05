@@ -48,13 +48,21 @@ app.get("/categories", (req, res) => {
 
 //récupération d'une catégorie
 app.get("/categories/:id", (req, res) => {
+
+  let data = {};
+  data.type = "ressource";
+  let dateAjd = new Date();
+  data.date = convertDate(dateAjd);
+  let lien = req.url;
+
   let idcategorie = req.params.id;
   Category.find({id: idcategorie}, (err, result) => {
     if (err) {
       res.status(500).send(err);
     }
-    // var_dump($result);
-    res.status(200).json(result);
+    data.categorie = result;
+    data.links = {sandwichs: `${lien}/sandwichs`, self: `${lien}`}; 
+    res.status(200).json(data);
   });
 });
 
@@ -70,9 +78,6 @@ app.get("/categories/:id/sandwichs", (req, res) => {
   res.status(200).json(result);
   });
 });
-
-
-
     
 //récupération de tous les sanwdichs
 app.get("/sandwich", (req, res) => {
@@ -139,3 +144,10 @@ function get_next_id() {
 
 app.listen(PORT, HOST);
 console.log(`Catalogue API Running on http://${HOST}:${PORT}`);
+
+// Fonction pour bien afficher la date
+function convertDate(inputFormat) {
+  function pad(s) { return (s < 10) ? '0' + s : s; }
+  var d = new Date(inputFormat)
+  return [pad(d.getDate()), pad(d.getMonth()+1), d.getFullYear()].join('-')
+}

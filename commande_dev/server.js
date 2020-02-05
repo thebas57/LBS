@@ -1,9 +1,11 @@
+
 "use strict";
 
 const express = require("express");
 const mysql = require("mysql");
 const bodyParser = require('body-parser');
 const uuid = require('uuid');
+const bcrypt = require('bcrypt');
 
 // Constants
 const PORT = 8080;
@@ -177,7 +179,9 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
   let nom = objCommande.nom;
   let mail = objCommande.mail;
   let id = uuid();
-  let query = `INSERT INTO commande (id,livraison, nom, mail, created_at) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" )`;
+  let hash = bcrypt.hashSync(id, 10);
+  let montant = 0;
+  let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
 
   if (nom.trim()=="" || mail.trim()=="" ) {
     console.log("pb insertion");
@@ -192,7 +196,7 @@ res.setHeader('Content-Type', 'application/json;charset=utf-8');
     }
     else {
       console.log("La commande a été créer");
-      res.status(201).send(JSON.stringify({result: result, commande: req.body}));// renvoie le json dans le body je crois
+      res.status(201).send(JSON.stringify({commande: req.body, id:id, token:hash}));// renvoie le json dans le body je crois
     }  
   });
   }
@@ -257,9 +261,6 @@ app.put("*", (req,res) => {
   res.status(400).json({"type":"error", "error":400, "message":"Ressource non disponible : " + req._parsedUrl.pathname });
   res.status(500).json({"type":"error", "error":500, "message":"Pb serveur : " + req._parsedUrl.pathname });
 });
-
-
-
 
 app.listen(PORT, HOST);
 console.log(`Commande API Running on http://${HOST}:${PORT}`);
