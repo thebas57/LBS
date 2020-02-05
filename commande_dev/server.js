@@ -169,7 +169,7 @@ app.get("/commandes/:id", (req, res) => {
             res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
         } else {
 
-            donne = { "id": result[0].id, "created_at": result[0].created_at, "livraison": result[0].livraison, "nom": result[0].nom, "mail": result[0].mail, "montant": result[0].montant };
+            donne = { "id": result[0].id, "livraison": result[0].livraison, "nom": result[0].nom, "mail": result[0].mail, "status": result[0].status, "montant": result[0].montant };
             for (let i = 0; i < result.length; i++) {
                 items[i] = { "uri": result[i].uri, "libelle": result[i].libelle, "tarif": result[i].tarif, "quantite": result[i].quantite };
             }
