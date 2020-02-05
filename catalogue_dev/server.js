@@ -147,16 +147,15 @@ function get_next_id() {
     });
 }
 
-app.listen(PORT, HOST);
-<<<<<<< HEAD
-console.log(`Catalogue API Running on http://${HOST}:${PORT}`);
-
 // Fonction pour bien afficher la date
 function convertDate(inputFormat) {
   function pad(s) { return (s < 10) ? '0' + s : s; }
   var d = new Date(inputFormat)
   return [pad(d.getDate()), pad(d.getMonth()+1), d.getFullYear()].join('-')
 }
-=======
+
+app.listen(PORT, HOST);
 console.log(`Catalogue API Running on http://${HOST}:${PORT}`);
->>>>>>> 4feb2abde3a7129ed8914c7eda4c409726d28d46
+
+
+
