@@ -155,6 +155,7 @@ app.get("/commandes/:id", (req, res) => {
     data.links = links;
     let donne = {};
     let items = {};
+    
 
     let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
 
