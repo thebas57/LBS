@@ -96,6 +96,18 @@ app.get("/sandwich", (req, res) => {
   });
 });
 
+//récupération d'un dwich
+app.get("/sandwich/:id", (req, res) => {
+  let idSandwich = req.params.id;
+  Sandwich.find({ref: idSandwich}, (err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    }
+
+    res.status(200).json(result);
+  });
+});
+
 
 //ajout d'une nouvelle catégorie
 app.post("/categories", (req, res) => {

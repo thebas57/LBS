@@ -5,6 +5,7 @@ const mysql = require("mysql");
 const bodyParser = require('body-parser');
 const uuid = require('uuid');
 const bcrypt = require('bcrypt');
+const axios = require('axios');
 
 // Constants
 const PORT = 8080;
