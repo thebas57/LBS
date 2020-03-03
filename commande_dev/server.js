@@ -276,7 +276,7 @@ app.post("/commandes",  (req, res) => {
                     tabUri.forEach(async items => {
 
                         let uri = items.uri;
-
+                        // --------------------------- IL FAUT FAIRE DES PROMESSE SINON ÇA MARCHE PAS !!!!! ---------------------------
                         axios.get('http://catalogue:8080' + uri)
                             .then(function(response) {
                                 prixSandwich = response.data[0].prix;
