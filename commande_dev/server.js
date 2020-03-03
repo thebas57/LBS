@@ -212,9 +212,36 @@ app.post("/commandes", async (req, res) => {
     let id = uuid();
     let hash = bcrypt.hashSync(id, 10);
     let montant = 0;
+    let tabUri = objCommande.items;
+
+    tabUri.forEach(async items => {
+        let uri = items.uri;
+
+        await axios.get('http://catalogue:8080' + uri)
+        .then(function(response) {
+            console.log("test");
+            /*
+                tabSandwichs += {
+                sandwichs: [
+                    response.data
+                ]
+            }
+            */
+           montant += response.data[0].prix * items.q;
+            //tabSandwichs.push(response.data);
+            //res.send(montant);
+        })
+        .catch(function (error) {
+            console.log("PROBLEME");
+        });
+
+    });
+
+    console.log(montant);
+
     let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
 
-    let tabUri = objCommande.items;
+    
 
     let libelle = "test";
     let tarif=1;
@@ -236,27 +263,12 @@ app.post("/commandes", async (req, res) => {
                 tabUri.forEach(async items => {
                     let uri = items.uri;
                     // RECUPERATION DONNES DES SANDWICHS DANS L'API CATALOGUE GRACE A L'URI   
-                    await axios.get('http://catalogue:8080' + uri)
-                        .then(function(response) {
-                            //console.log("test");
-                            /*
-                                tabSandwichs += {
-                                sandwichs: [
-                                    response.data
-                                ]
-                            }
-                            */
-                           montant += response.data[0].prix * items.q;
-                            //tabSandwichs.push(response.data);
-                            console.log(montant);
-                            //res.send(montant);
-                        })
-                        .catch(function (error) {
-                            console.log("PROBLEME");
-                        })
+                    
+                        
+                        // res.send('is ok');
                     let quantite = items.q;
                     let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
-                /*    db.query(queryItem, (err, result) => {
+                    /*db.query(queryItem, (err, result) => {
                     if (err) {
                         console.error(err);
                         res.status(500).send(JSON.stringify(err)); //erreur serveur
@@ -268,7 +280,7 @@ app.post("/commandes", async (req, res) => {
                         }
                         
                         }       
-                    }) */
+                    })*/
                 }
             ); 
             }
