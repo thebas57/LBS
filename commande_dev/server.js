@@ -239,7 +239,7 @@ app.post("/commandes", async (req, res) => {
                     await axios.get('http://catalogue:8080' + uri)
                         .then(function(response) {
                             //console.log("test");
-                            /*
+                            /* 
                                 tabSandwichs += {
                                 sandwichs: [
                                     response.data
@@ -254,7 +254,7 @@ app.post("/commandes", async (req, res) => {
                         .catch(function (error) {
                             console.log("PROBLEME");
                         })
-                    let quantite = items.q;
+
                     let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
                 /*    db.query(queryItem, (err, result) => {
                     if (err) {
