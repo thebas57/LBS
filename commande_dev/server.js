@@ -198,7 +198,7 @@ app.get("/commandes/:id", async (req, res) => {
 });
 
 // ------------------- POST UNE COMMANDE ---------------
-app.post("/commandes", async (req, res) => {
+app.post("/commandes",  (req, res) => {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     // Json en objet 
 
@@ -212,69 +212,101 @@ app.post("/commandes", async (req, res) => {
     let id = uuid();
     let hash = bcrypt.hashSync(id, 10);
     let montant = 0;
-    let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
-
     let tabUri = objCommande.items;
 
-    let libelle = "test";
-    let tarif=1;
+    const promises = [];
 
-    let tabSandwichs = [];
+    tabUri.forEach( (items) => {
+        let uri = items.uri;
 
-    if (nom.trim() == "" || mail.trim() == "") {
-        console.log("pb insertion");
-        res.status(404).json({ "type": "error", "error": 404, "message": "Tout les champs ne sont pas remplis / Il manque des infos " });
-    } else {
-        db.query(query, (err, result) => {
-
-            if (err) {
-                console.error(err);
-                res.status(500).send(JSON.stringify(err)); //erreur serveur
-            } else {
-                // insertion item pour chaque élément
-                let c = 0;
-                tabUri.forEach(async items => {
-                    let uri = items.uri;
-                    // RECUPERATION DONNES DES SANDWICHS DANS L'API CATALOGUE GRACE A L'URI   
-                    await axios.get('http://catalogue:8080' + uri)
-                        .then(function(response) {
-                            //console.log("test");
-                            /* 
-                                tabSandwichs += {
-                                sandwichs: [
-                                    response.data
-                                ]
-                            }
-                            */
-                           montant += response.data[0].prix * items.q;
-                            //tabSandwichs.push(response.data);
-                            console.log(montant);
-                            //res.send(montant);
-                        })
-                        .catch(function (error) {
-                            console.log("PROBLEME");
-                        })
-
-                    let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
-                /*    db.query(queryItem, (err, result) => {
-                    if (err) {
-                        console.error(err);
-                        res.status(500).send(JSON.stringify(err)); //erreur serveur
-                    } else {
-                        c = c+1;
-                        
-                        if (tabUri.length == c) {
-                           res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
-                        }
-                        
-                        }       
-                    }) */
-                }
-            ); 
+        const a_promise = axios.get('http://catalogue:8080' + uri)
+        .then(function(response) {
+           // console.log("test");
+            /*
+                tabSandwichs += {
+                sandwichs: [
+                    response.data
+                ]
             }
+            */
+           //montant += response.data[0].prix * items.q;
+            //response.data[0].prix * items.q;
+
+            return response.data[0].prix * items.q;
+            //tabSandwichs.push(response.data);
+            //res.send(montant);
+        })
+        .catch(err=>{
+            throw new Error(err)
         });
 
-    }
+        promises.push(a_promise);
+
+    });
+
+    Promise.all(promises).then(result=>{
+        result.forEach(un_montant=>{
+            montant+=un_montant;
+        })
+
+        console.log("montant")
+        console.log(montant);
+    
+        let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
+    
+            
+    
+        let libelle = "test";
+        let tarif=1;
+    
+        let tabSandwichs = [];
+    
+        if (nom.trim() == "" || mail.trim() == "") {
+            console.log("pb insertion");
+            res.status(404).json({ "type": "error", "error": 404, "message": "Tout les champs ne sont pas remplis / Il manque des infos " });
+        } else {
+            db.query(query, (err, result) => {
+    
+                if (err) {
+                    console.error(err);
+                    res.status(500).send(JSON.stringify(err)); //erreur serveur
+                } else {
+                    // insertion item pour chaque élément
+                    let c = 0;
+                    tabUri.forEach(async items => {
+                        let uri = items.uri;
+                        // RECUPERATION DONNES DES SANDWICHS DANS L'API CATALOGUE GRACE A L'URI   
+                        
+                            
+                            // res.send('is ok');
+                        let quantite = items.q;
+                        let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
+                        db.query(queryItem, (err, result) => {
+                        if (err) {
+                            console.error(err);
+                            res.status(500).send(JSON.stringify(err)); //erreur serveur
+                        } else {
+                            c = c+1;
+                            
+                            if (tabUri.length == c) {
+                               res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
+                            }
+                            
+                            }       
+                        })
+                    }
+                ); 
+                }
+            });
+    
+        }
+
+
+    }).catch(err=>{
+        throw new Error(err);
+    })
+
+ 
 
 });
 
