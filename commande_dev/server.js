@@ -198,7 +198,7 @@ app.get("/commandes/:id", async (req, res) => {
 });
 
 // ------------------- POST UNE COMMANDE ---------------
-app.post("/commandes", (req, res) => {
+app.post("/commandes", async (req, res) => {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     // Json en objet 
 
@@ -219,7 +219,7 @@ app.post("/commandes", (req, res) => {
     let libelle = "test";
     let tarif=1;
 
-    let tabSandwichs = "";
+    let tabSandwichs = [];
 
     if (nom.trim() == "" || mail.trim() == "") {
         console.log("pb insertion");
@@ -233,20 +233,23 @@ app.post("/commandes", (req, res) => {
             } else {
                 // insertion item pour chaque élément
                 let c = 0;
-                tabUri.forEach(items => {
+                tabUri.forEach(async items => {
                     let uri = items.uri;
                     // RECUPERATION DONNES DES SANDWICHS DANS L'API CATALOGUE GRACE A L'URI   
-                    axios.get('http://catalogue:8080' + uri)
+                    await axios.get('http://catalogue:8080' + uri)
                         .then(function(response) {
                             //console.log("test");
+                            /*
                                 tabSandwichs += {
                                 sandwichs: [
                                     response.data
                                 ]
                             }
-                            console.log(response.data);
-                            console.log(tabSandwichs);
-                            res.send(tabSandwichs);
+                            */
+                           montant += response.data[0].prix * items.q;
+                            //tabSandwichs.push(response.data);
+                            console.log(montant);
+                            //res.send(montant);
                         })
                         .catch(function (error) {
                             //console.log("PROBLEME");
@@ -254,7 +257,6 @@ app.post("/commandes", (req, res) => {
 
                     let quantite = items.q;
                     let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
-                    
                 /*    db.query(queryItem, (err, result) => {
                     if (err) {
                         console.error(err);
