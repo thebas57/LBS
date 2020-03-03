@@ -254,8 +254,6 @@ app.post("/commandes", async (req, res) => {
                         .catch(function (error) {
                             console.log("PROBLEME");
                         })
-                    res.json(tabSandwichs);
-                    console.log(tabSandwichs);
                     let quantite = items.q;
                     let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
                 /*    db.query(queryItem, (err, result) => {
