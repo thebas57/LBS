@@ -140,19 +140,18 @@ app.get("/commandes", (req, res) => {
 });
 
 
-
-
 // ------------------- Pour une commande --------------
-app.get("/commandes/:id", (req, res) => {
+app.get("/commandes/:id", async (req, res) => {
     res.type("application/json;charset=utf-8");
 
     let idC = req.params.id;
     let token = null;
+    /*
     if (req.query.token != null){
         token = req.query.token;
     }else{
         token = req.headers['x-lbs-token'];
-    }
+    }*/
 
     let data = {};
     let links = {};
@@ -162,11 +161,11 @@ app.get("/commandes/:id", (req, res) => {
     data.links = links;
     let donne = {};
     let items = {};
-
+/*
     if(!bcrypt.compareSync(idC, token)){
         res.status(404).json({ "type": "error", "error": 404, "message": "le token est invalide "});
     }else{
-        
+        */
         let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
         // let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
 
@@ -182,19 +181,19 @@ app.get("/commandes/:id", (req, res) => {
                 res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
             }else{
 
-                donne = { "id": result[0].id, "created_at": result[0].created_at, "livraison": result[0].livraison, "nom": result[0].nom, "mail": result[0].mail, "montant": result[0].montant };
+                donne = { "id": result[0].id, "created_at": result[0].created_at, "livraison": result[0].livraison, 
+                "nom": result[0].nom, "mail": result[0].mail, "montant": result[0].montant };
                 for (let i = 0; i < result.length; i++) {
                     items[i] = { "uri": result[i].uri, "libelle": result[i].libelle, "tarif": result[i].tarif, "quantite": result[i].quantite };
                 }
                 donne.items = items
                 data.commands = donne;
-
-
+                console.log(donne);
                 res.status(200).send(JSON.stringify(data));
 
             }
         });
-    }
+    //}
 
 });
 
@@ -216,8 +215,11 @@ app.post("/commandes", (req, res) => {
     let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
 
     let tabUri = objCommande.items;
+
     let libelle = "test";
     let tarif=1;
+
+    let tabSandwichs = "";
 
     if (nom.trim() == "" || mail.trim() == "") {
         console.log("pb insertion");
@@ -233,10 +235,27 @@ app.post("/commandes", (req, res) => {
                 let c = 0;
                 tabUri.forEach(items => {
                     let uri = items.uri;
+                    // RECUPERATION DONNES DES SANDWICHS DANS L'API CATALOGUE GRACE A L'URI   
+                    axios.get('http://catalogue:8080' + uri)
+                        .then(function(response) {
+                            //console.log("test");
+                                tabSandwichs += {
+                                sandwichs: [
+                                    response.data
+                                ]
+                            }
+                            console.log(response.data);
+                            console.log(tabSandwichs);
+                            res.send(tabSandwichs);
+                        })
+                        .catch(function (error) {
+                            //console.log("PROBLEME");
+                        })
+
                     let quantite = items.q;
                     let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
                     
-                    db.query(queryItem, (err, result) => {
+                /*    db.query(queryItem, (err, result) => {
                     if (err) {
                         console.error(err);
                         res.status(500).send(JSON.stringify(err)); //erreur serveur
@@ -248,7 +267,7 @@ app.post("/commandes", (req, res) => {
                         }
                         
                         }       
-                    })
+                    }) */
                 }
             ); 
             }

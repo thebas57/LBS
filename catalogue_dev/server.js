@@ -86,7 +86,7 @@ app.get("/categories/:id/sandwichs", (req, res) => {
 });
     
 //récupération de tous les sanwdichs
-app.get("/sandwich", (req, res) => {
+app.get("/sandwichs", (req, res) => {
   Sandwich.find({}, (err, result) => {
     if (err) {
       res.status(500).send(err);
@@ -97,7 +97,7 @@ app.get("/sandwich", (req, res) => {
 });
 
 //récupération d'un dwich
-app.get("/sandwich/:id", (req, res) => {
+app.get("/sandwichs/:id", (req, res) => {
   let idSandwich = req.params.id;
   Sandwich.find({ref: idSandwich}, (err, result) => {
     if (err) {
