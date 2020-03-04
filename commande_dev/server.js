@@ -286,7 +286,7 @@ app.post("/commandes", (req, res) => {
 
                         let uri = items.uri;
                         // --------------------------- IL FAUT FAIRE DES PROMESSE SINON ÇA MARCHE PAS !!!!! ---------------------------
-                        axios.get('http://catalogue:8080' + uri)
+                        const b_promise = axios.get('http://catalogue:8080' + uri)
                             .then(function(response) {
                                 prixSandwich = response.data[0].prix;
                                 console.log(prixSandwich);
@@ -296,6 +296,7 @@ app.post("/commandes", (req, res) => {
                                 throw new Error(err)
                             });
 
+                            b_promise.then(result => {
                         // res.send('is ok');
                         let quantite = items.q;
                         let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelleSandwich}","${prixSandwich}","${quantite}","${id}")`
@@ -307,11 +308,14 @@ app.post("/commandes", (req, res) => {
                                 c = c + 1;
 
                                 if (tabUri.length == c) {
-                                    res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
+                                    res.status(201).send(JSON.stringify({ commande: req.body,montant:montant, id: id, token: hash })); // renvoie le json dans le body je crois
                                 }
 
                             }
                         })
+                            })
+
+
                     });
                 }
             });
