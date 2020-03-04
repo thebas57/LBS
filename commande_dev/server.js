@@ -6,6 +6,9 @@ const bodyParser = require('body-parser');
 const uuid = require('uuid');
 const bcrypt = require('bcrypt');
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
+let config = require('./config');
+let middleware = require('./middleware');
 
 // Constants
 const PORT = 8080;
@@ -141,7 +144,7 @@ app.get("/commandes", (req, res) => {
 
 
 // ------------------- Pour une commande --------------
-app.get("/commandes/:id", async (req, res) => {
+app.get("/commandes/:id", async(req, res) => {
     res.type("application/json;charset=utf-8");
 
     let idC = req.params.id;
@@ -161,44 +164,50 @@ app.get("/commandes/:id", async (req, res) => {
     data.links = links;
     let donne = {};
     let items = {};
-/*
-    if(!bcrypt.compareSync(idC, token)){
-        res.status(404).json({ "type": "error", "error": 404, "message": "le token est invalide "});
-    }else{
-        */
-        let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
-        // let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
+    /*
+        if(!bcrypt.compareSync(idC, token)){
+            res.status(404).json({ "type": "error", "error": 404, "message": "le token est invalide "});
+        }else{
+            */
+    let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
+    // let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
 
 
 
-        db.query(query, (err, result) => {
-            if (err) {
-                console.error(err);
-                res.status(404).send(err);
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            res.status(404).send(err);
+        }
+        if (result.length <= 0) {
+            console.log(req.params.id + " Inexistant");
+            res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
+        } else {
+
+            donne = {
+                "id": result[0].id,
+                "created_at": result[0].created_at,
+                "livraison": result[0].livraison,
+                "nom": result[0].nom,
+                "mail": result[0].mail,
+                "montant": result[0].montant
+            };
+            for (let i = 0; i < result.length; i++) {
+                items[i] = { "uri": result[i].uri, "libelle": result[i].libelle, "tarif": result[i].tarif, "quantite": result[i].quantite };
             }
-            if (result.length <= 0) {
-                console.log(req.params.id + " Inexistant");
-                res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
-            }else{
+            donne.items = items
+            data.commands = donne;
+            console.log(donne);
+            res.status(200).send(JSON.stringify(data));
 
-                donne = { "id": result[0].id, "created_at": result[0].created_at, "livraison": result[0].livraison, 
-                "nom": result[0].nom, "mail": result[0].mail, "montant": result[0].montant };
-                for (let i = 0; i < result.length; i++) {
-                    items[i] = { "uri": result[i].uri, "libelle": result[i].libelle, "tarif": result[i].tarif, "quantite": result[i].quantite };
-                }
-                donne.items = items
-                data.commands = donne;
-                console.log(donne);
-                res.status(200).send(JSON.stringify(data));
-
-            }
-        });
+        }
+    });
     //}
 
 });
 
 // ------------------- POST UNE COMMANDE ---------------
-app.post("/commandes", async (req, res) => {
+app.post("/commandes", async(req, res) => {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
     // Json en objet 
 
@@ -217,7 +226,7 @@ app.post("/commandes", async (req, res) => {
     let tabUri = objCommande.items;
 
     let libelle = "test";
-    let tarif=1;
+    let tarif = 1;
 
     let tabSandwichs = [];
 
@@ -246,31 +255,30 @@ app.post("/commandes", async (req, res) => {
                                 ]
                             }
                             */
-                           montant += response.data[0].prix * items.q;
+                            montant += response.data[0].prix * items.q;
                             //tabSandwichs.push(response.data);
                             console.log(montant);
                             //res.send(montant);
                         })
-                        .catch(function (error) {
+                        .catch(function(error) {
                             console.log("PROBLEME");
                         })
                     let quantite = items.q;
-                    let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")` 
-                /*    db.query(queryItem, (err, result) => {
-                    if (err) {
-                        console.error(err);
-                        res.status(500).send(JSON.stringify(err)); //erreur serveur
-                    } else {
-                        c = c+1;
-                        
-                        if (tabUri.length == c) {
-                           res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
-                        }
-                        
-                        }       
-                    }) */
-                }
-            ); 
+                    let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelle}","${tarif}","${quantite}","${id}")`
+                        /*    db.query(queryItem, (err, result) => {
+                            if (err) {
+                                console.error(err);
+                                res.status(500).send(JSON.stringify(err)); //erreur serveur
+                            } else {
+                                c = c+1;
+                                
+                                if (tabUri.length == c) {
+                                   res.status(201).send(JSON.stringify({ commande: req.body, id: id, token: hash })); // renvoie le json dans le body je crois
+                                }
+                                
+                                }       
+                            }) */
+                });
             }
         });
 
@@ -318,6 +326,74 @@ app.put("/commandes/:id", (req, res) => {
 })
 
 
+// ------------------- GET UN CLIENT ---------------
+app.get("/clients/:id", async(req, res) => {
+
+
+
+    let query = `SELECT * FROM client WHERE client.id= "${idC}"`;
+
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error(err);
+            res.status(404).send(err);
+        }
+        if (result.length <= 0) {
+            console.log(req.params.id + " Inexistant");
+            res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
+        } else {
+
+            donne = {
+                "id": result[0].id,
+                "nom_client": result[0].nom_client,
+                "mail_client": result[0].mail_client,
+                "passwd": result[0].passwd,
+                "cumuls": result[0].cumuls,
+
+            };
+
+
+            console.log(donne);
+            res.status(200).send(JSON.stringify(donne));
+
+        }
+    });
+});
+
+// ------------------- POST UN CLIENT ---------------
+app.post("/clients", async(req, res) => {
+    res.setHeader('Content-Type', 'application/json;charset=utf-8');
+    // Json en objet 
+
+    const client = JSON.stringify(req.body);
+    const objClient = JSON.parse(client);
+    // let dateTest = "2019-11-08 13:45:55"
+    let dateTest = toMysqlFormat(new Date());
+    let nom_client = objClient.nom_client;
+    let mail_client = objClient.mail_client;
+    let passwd = bcrypt.hash(objClient.passwd);
+    let cumuls = objClient.cumul_achats;
+
+
+
+    let query = `INSERT INTO client (nom_client, mail_client,passwd,cumul_achats, created_at, updated_at) VALUES  ("${nom_client}", "${mail_client}","${passwd}","${cumuls}" ,"${dateTest}","${dateTest}")`;
+    db.query(query, (err, result) => {
+
+        if (err) {
+            console.error(err);
+            res.status(500).send(JSON.stringify(err)); //erreur serveur
+        } else {
+            /* let token = jwt.sign({}, privateKey, { algorithm: 'HS256' });
+
+             res.send({ token: token });*/
+            res.status(201).send(JSON.stringify("ok"));
+        }
+    });
+
+
+
+});
 // ------------------ Gestion erreur chemin ------------------
 // ------------------- POST -----------------------
 app.post("/commandes/:id", (req, res) => {
