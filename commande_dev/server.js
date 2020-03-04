@@ -149,12 +149,12 @@ app.get("/commandes/:id", async(req, res) => {
 
     let idC = req.params.id;
     let token = null;
-    /*
+    
     if (req.query.token != null){
         token = req.query.token;
     }else{
         token = req.headers['x-lbs-token'];
-    }*/
+    }
 
     let data = {};
     let links = {};
@@ -164,11 +164,11 @@ app.get("/commandes/:id", async(req, res) => {
     data.links = links;
     let donne = {};
     let items = {};
-    /*
+    
         if(!bcrypt.compareSync(idC, token)){
             res.status(404).json({ "type": "error", "error": 404, "message": "le token est invalide "});
         }else{
-            */
+            
     let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
     // let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
 
@@ -202,7 +202,7 @@ app.get("/commandes/:id", async(req, res) => {
 
         }
     });
-    //}
+    }
 
 });
 
@@ -391,7 +391,6 @@ app.get("/clients/:id", async(req, res) => {
                 "mail_client": result[0].mail_client,
                 "passwd": result[0].passwd,
                 "cumuls": result[0].cumuls,
-
             };
 
 
@@ -425,9 +424,9 @@ app.post("/clients", async(req, res) => {
             console.error(err);
             res.status(500).send(JSON.stringify(err)); //erreur serveur
         } else {
-            /* let token = jwt.sign({}, privateKey, { algorithm: 'HS256' });
-
-             res.send({ token: token });*/
+            let token = jwt.sign({}, privateKey, { algorithm: 'HS256' });
+            console.log(token);
+            // res.status(201).send({ token: token });
             res.status(201).send(JSON.stringify("ok"));
         }
     });
