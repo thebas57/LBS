@@ -168,9 +168,8 @@ app.get("/commandes/:id", async(req, res) => {
         if(!bcrypt.compareSync(idC, token)){
             res.status(404).json({ "type": "error", "error": 404, "message": "le token est invalide "});
         }else{
-            
-    let query = `SELECT * FROM commande WHERE commande.id= "${idC}"  `; // query database to get all the players sans l'item de ces mort
-    // let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
+
+    let query = `SELECT * FROM commande INNER JOIN item on commande.id=item.command_id WHERE commande.id= "${idC}"  `; // query database to get all the players
 
 
 
@@ -183,7 +182,7 @@ app.get("/commandes/:id", async(req, res) => {
             console.log(req.params.id + " Inexistant");
             res.status(404).json({ "type": "error", "error": 404, "message": "Ressource non disponible : " + req._parsedUrl.pathname });
         } else {
-
+            // console.log(resultat[0]);
             donne = {
                 "id": result[0].id,
                 "created_at": result[0].created_at,
