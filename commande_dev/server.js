@@ -7,6 +7,7 @@ const uuid = require('uuid');
 const bcrypt = require('bcrypt');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 let config = require('./config');
 let middleware = require('./middleware');
 
@@ -159,7 +160,7 @@ app.get("/commandes/:id", async(req, res) => {
     let data = {};
     let links = {};
     data.type = "ressouce";
-    links.self = `/commandes/"${ idC }"`;
+    links.self = `/commandes/"${ idC }"`; 
     links.items = `/commandes/"${ idC }"/items`;
     data.links = links;
     let donne = {};
@@ -196,7 +197,7 @@ app.get("/commandes/:id", async(req, res) => {
             }
             donne.items = items
             data.commands = donne;
-            console.log(donne);
+            
             res.status(200).send(JSON.stringify(data));
 
         }
@@ -229,20 +230,7 @@ app.post("/commandes", (req, res) => {
 
         const a_promise = axios.get('http://catalogue:8080' + uri)
             .then(function(response) {
-                // console.log("test");
-                /*
-                    tabSandwichs += {
-                    sandwichs: [
-                        response.data
-                    ]
-                }
-                */
-                //montant += response.data[0].prix * items.q;
-                //response.data[0].prix * items.q;
-
                 return response.data[0].prix * items.q;
-                //tabSandwichs.push(response.data);
-                //res.send(montant);
             })
             .catch(err => {
                 throw new Error(err)
@@ -256,18 +244,10 @@ app.post("/commandes", (req, res) => {
         result.forEach(un_montant => {
             montant += un_montant;
         })
-
-        console.log("montant")
-        console.log(montant);
-
         let query = `INSERT INTO commande (id,livraison, nom, mail, created_at, token,montant) VALUES  ("${id}","${dateTest}", "${nom}","${mail}","${dateTest}" ,"${hash}","${montant}")`;
 
         let libelleSandwich = "";
         let prixSandwich = 0;
-
-        let libelle = "test";
-
-        let tabSandwichs = [];
 
         if (nom.trim() == "" || mail.trim() == "") {
             console.log("pb insertion");
@@ -296,7 +276,6 @@ app.post("/commandes", (req, res) => {
                             });
 
                             b_promise.then(result => {
-                        // res.send('is ok');
                         let quantite = items.q;
                         let queryItem = `INSERT INTO item (uri,libelle,tarif,quantite,command_id) VALUES ("${uri}","${libelleSandwich}","${prixSandwich}","${quantite}","${id}")`
                         db.query(queryItem, (err, result) => {
@@ -407,11 +386,10 @@ app.get("/clients/:id", async(req, res) => {
 // ------------------- POST UN CLIENT ---------------
 app.post("/clients", async(req, res) => {
     res.setHeader('Content-Type', 'application/json;charset=utf-8');
-    // Json en objet 
+    // Json en objet
 
     const client = JSON.stringify(req.body);
     const objClient = JSON.parse(client);
-    // let dateTest = "2019-11-08 13:45:55"
     let dateTest = toMysqlFormat(new Date());
     let nom_client = objClient.nom_client;
     let mail_client = objClient.mail_client;
@@ -425,12 +403,58 @@ app.post("/clients", async(req, res) => {
 
         if (err) {
             console.error(err);
-            res.status(500).send(JSON.stringify(err)); //erreur serveur
+            res.status(403).json({ "message": ""});
         } else {
-            let token = jwt.sign({}, privateKey, { algorithm: 'HS256' });
+            
+
+            let token = jwt.sign({}, config.secret , { algorithm: 'HS256' });
             console.log(token);
-            // res.status(201).send({ token: token });
-            res.status(201).send(JSON.stringify("ok"));
+            res.status(201).send({ token: token });
+        }
+    });
+
+
+
+});
+
+// ------------------- AUTHENTIFICATION D'UN CLIENT ---------------
+app.post("/connexion", async(req, res) => {
+    res.setHeader('Content-Type', 'application/json;charset=utf-8');
+    // Json en objet
+
+    let tokenauthorization = JSON.stringify(req.headers.authorization.split(' ')[1]);
+
+    if(!tokenauthorization){
+        res.status(401).json({ "message": "no authorization header present"});
+    }
+
+    jwt.verify(tokenauthorization,config.secret, {algorithm: "H256"}, (err) => {
+        if(err){
+            req.status(500).json({error: "Not Authorized"});
+        }
+    })
+
+    const client = JSON.stringify(req.body);
+    const objClient = JSON.parse(client);
+    let nom_client = objClient.nom_client;
+    let mail_client = objClient.mail_client;
+    let passwd = bcrypt.hash(objClient.passwd);
+
+    let query = `SELECT * FROM client WHERE mail_client = "${mail_client}"`;
+
+    db.query(query, (err, result) => {
+
+        if (err) {
+            console.error(err);
+            res.status(401).json({ "message": "no authorization header present"});
+        } else {
+
+            if(!bcrypt.compareSync(result[0].passwd, passwd)){
+                res.status(401).json({ "message": "bad password"});
+            }
+            let token = jwt.sign({}, config.secret , { algorithm: 'HS256' });
+            console.log(token);
+            res.status(201).send({ token: token });
         }
     });
 
